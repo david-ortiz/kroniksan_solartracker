@@ -146,7 +146,8 @@ api.get('/status', (req, res) => {
   });
 });
 
-api.get('/live', (req, res) => {
+/** Latest site values, their flow split, and today's totals. */
+export function liveSnapshot() {
   const latestTs = db.prepare("SELECT MAX(ts) ts FROM samples WHERE metric IN ('production','consumption','import','export')").get().ts;
   const values = {};
   if (latestTs) {
@@ -158,13 +159,11 @@ api.get('/live', (req, res) => {
   }
   const day = today();
   const totals = daily(day, day).get(day) ?? {};
-  const p = values;
-  const flows = allocateFlows(p);
-  res.json({ ts: latestTs ?? null, values, flows, today: { day, totals, kpis: kpis(totals) } });
-});
+  return { ts: latestTs ?? null, values, flows: allocateFlows(values), today: { day, totals, kpis: kpis(totals) } };
+}
 
-api.get('/day', (req, res) => {
-  const day = validDay(req.query.date);
+/** 15-minute points, totals and peak for one local day. */
+export function dayData(day) {
   const [from, to] = dayRange(day, tz());
   const pts = points(from, to);
   for (const o of pts) {
@@ -175,8 +174,25 @@ api.get('/day', (req, res) => {
   const totals = daily(day, day).get(day) ?? {};
   let peak = null;
   for (const o of pts) if (o.production != null && (!peak || o.production > peak.value)) peak = { ts: o.ts, value: o.production };
-  res.json({ date: day, from, to, points: pts, totals, kpis: kpis(totals), peak });
-});
+  return { date: day, from, to, points: pts, totals, kpis: kpis(totals), peak };
+}
+
+/** Daily totals for the last n days, oldest first. */
+export function recentDays(n) {
+  const end = today();
+  const start = addDays(end, -(n - 1));
+  const days = daily(start, end);
+  return Array.from({ length: n }, (_, i) => {
+    const day = addDays(start, i);
+    return { day, ...(days.get(day) ?? {}) };
+  });
+}
+
+export { today };
+
+api.get('/live', (req, res) => res.json(liveSnapshot()));
+
+api.get('/day', (req, res) => res.json(dayData(validDay(req.query.date))));
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

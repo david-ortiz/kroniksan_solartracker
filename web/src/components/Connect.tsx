@@ -22,7 +22,7 @@ export function Connect({ status }: { status: Status }) {
   if (status.mode === 'live' && status.connected) return null;
   const demo = status.mode === 'demo';
   return (
-    <section className="card relative overflow-hidden p-5">
+    <section className="card relative overflow-hidden p-6">
       <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full opacity-30 blur-3xl" style={{ background: 'var(--solar)' }} />
       <div className="relative flex flex-wrap items-start justify-between gap-5">
         <div className="max-w-2xl">

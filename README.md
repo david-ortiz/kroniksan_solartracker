@@ -50,3 +50,34 @@ Without credentials it runs in **demo mode**, with three years of simulated data
 4. Restart with `npm start`, then click **Connect SolarEdge** and approve with your homeowner account.
 
 Tokens and data are stored in `data/solar.db`. Delete that file to start fresh.
+
+## E-ink display (Inky Impression 13.3")
+
+`GET /api/eink.png` returns a 1600 × 1200 PNG drawn only in the panel's six Spectra 6 inks (black, white, yellow, red, blue, green). It has no anti-aliasing, so it displays without dithering. It shows:
+
+- solar power now
+- home, grid and battery
+- today's totals and money
+- today's power curve
+- the last 7 days
+
+| URL | What it is |
+|---|---|
+| `/api/eink.png` | The image for the panel. |
+| `/api/eink.png?preview=1` | The same layout in colours close to the real panel, for checking it in a browser. |
+| `/api/eink.svg` | The vector source. |
+
+On the Raspberry Pi:
+
+```bash
+pip install inky[rpi] pillow requests
+python3 eink/show_solar.py --url http://<this-pc-ip>:8787/api/eink.png
+```
+
+Then add it to cron to run every 15 minutes:
+
+```
+*/15 * * * * /usr/bin/python3 /home/pi/show_solar.py --url http://<this-pc-ip>:8787/api/eink.png
+```
+
+Add `--rotate 180` if the panel is mounted upside down. On Windows, allow Node.js through the firewall on port 8787 so the Pi can reach it.

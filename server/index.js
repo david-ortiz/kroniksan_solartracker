@@ -4,6 +4,7 @@ import express from 'express';
 import { config, ROOT } from './config.js';
 import { kv } from './db.js';
 import { api } from './api.js';
+import { eink } from './eink.js';
 import { authorizeUrl, exchangeCode } from './solaredge.js';
 import { onConnected, startScheduler } from './sync.js';
 import { setupDemo } from './demo.js';
@@ -12,6 +13,7 @@ const app = express();
 app.disable('x-powered-by');
 app.use(express.json());
 app.use('/api', api);
+app.use('/api', eink);
 
 // ---------------------------------------------------------------- OAuth
 
@@ -55,10 +57,15 @@ if (fs.existsSync(dist)) {
   app.get(/^\/(?!api|auth).*/, (req, res) => res.sendFile(path.join(dist, 'index.html')));
 }
 
-app.listen(config.port, () => {
+// Express 5 passes listen errors to this callback. Only the process that owns the
+// port may run the scheduler, otherwise two copies would both spend API credits.
+app.listen(config.port, (err) => {
+  if (err) {
+    console.error(`Port ${config.port} is busy (${err.code}). Is the dashboard already running? Exiting.`);
+    process.exit(1);
+  }
   console.log(`☀  Solar dashboard API on ${config.appUrl} (${config.demo ? 'DEMO mode' : 'live mode'})`);
   if (!config.demo) console.log(`   OAuth redirect URI to register at SolarEdge: ${config.redirectUri}`);
+  if (config.demo) setupDemo();
+  else startScheduler();
 });
-
-if (config.demo) setupDemo();
-else startScheduler();

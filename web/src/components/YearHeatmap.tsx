@@ -9,6 +9,7 @@ export function YearHeatmap({ year, setYear, onPickDay }: { year: number; setYea
   const p = usePalette();
   const { data } = useCalendar(year);
   const max = useMemo(() => Math.max(1, ...(data?.days ?? []).map((d) => d.production ?? 0)), [data]);
+  const total = useMemo(() => (data?.days ?? []).reduce((a, d) => a + (d.production ?? 0), 0), [data]);
 
   const option = useMemo(
     () => ({
@@ -23,22 +24,22 @@ export function YearHeatmap({ year, setYear, onPickDay }: { year: number; setYea
         orient: 'horizontal',
         left: 'right',
         bottom: 0,
-        itemHeight: 120,
+        itemHeight: 140,
         itemWidth: 10,
         calculable: false,
         text: [`${(max / 1000).toFixed(0)} kWh`, '0'],
         textStyle: { color: p.muted, fontSize: 11 },
         // Sequential: one hue, from near-surface to full solar.
-        inRange: { color: [p.surface2, mix(p.solar, p.surface2, 0.45), p.solar] },
+        inRange: { color: [mix(p.solar, p.surface2, 0.12), mix(p.solar, p.surface2, 0.5), p.solar] },
       },
       calendar: {
-        top: 24,
+        top: 26,
         left: 30,
         right: 8,
-        bottom: 40,
-        cellSize: ['auto', 14],
+        bottom: 42,
+        cellSize: ['auto', 15],
         range: String(year),
-        itemStyle: { color: 'transparent', borderColor: p.surface, borderWidth: 3 },
+        itemStyle: { color: p.surface2, borderColor: p.surface, borderWidth: 3 },
         splitLine: { show: false },
         yearLabel: { show: false },
         dayLabel: { firstDay: 1, nameMap: ['S', 'M', 'T', 'W', 'T', 'F', 'S'], color: p.muted, fontSize: 10 },
@@ -48,7 +49,8 @@ export function YearHeatmap({ year, setYear, onPickDay }: { year: number; setYea
         {
           type: 'heatmap',
           coordinateSystem: 'calendar',
-          itemStyle: { borderRadius: 3, borderColor: p.surface, borderWidth: 2 },
+          itemStyle: { borderRadius: 4, borderColor: p.surface, borderWidth: 2 },
+          emphasis: { itemStyle: { borderColor: p.text, borderWidth: 1.5 } },
           data: (data?.days ?? []).filter((d) => d.production != null).map((d) => [d.day, +((d.production ?? 0) / 1000).toFixed(2)]),
         },
       ],
@@ -60,16 +62,16 @@ export function YearHeatmap({ year, setYear, onPickDay }: { year: number; setYea
   return (
     <Card
       title="Solar calendar"
-      subtitle="Daily production · click a day to open it"
+      subtitle={data ? `${energy(total)} in ${year} · click any day to open it` : 'Daily production'}
       actions={<Stepper label={year} onPrev={() => setYear(year - 1)} onNext={() => setYear(year + 1)} prevDisabled={!!years && year <= years.first} nextDisabled={!!years && year >= years.last} />}
       table={data ? { columns: ['Day', 'Solar (kWh)'], rows: data.days.map((d) => [d.day, ((d.production ?? 0) / 1000).toFixed(2)]) } : undefined}
     >
       <div className="overflow-x-auto">
-        <div className="min-w-[680px]">
+        <div className="min-w-[720px]">
           {data ? (
-            <EChart option={option} height={190} onClick={(x) => Array.isArray(x.data) && onPickDay(String(x.data[0]))} ariaLabel={`Daily solar production calendar for ${year}`} />
+            <EChart option={option} height={200} onClick={(x) => Array.isArray(x.data) && onPickDay(String(x.data[0]))} ariaLabel={`Daily solar production calendar for ${year}`} />
           ) : (
-            <Skeleton h={190} />
+            <Skeleton h={200} />
           )}
         </div>
       </div>

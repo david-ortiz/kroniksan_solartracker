@@ -43,18 +43,11 @@ export function Card({
   );
 }
 
-/** Editorial section opener: index + eyebrow, big title, controls on the right. */
-export function SectionHeading({ id, index, eyebrow, title, children }: { id: string; index: string; eyebrow: string; title: ReactNode; children?: ReactNode }) {
+/** Section opener: big title, controls on the right. */
+export function SectionHeading({ id, title, children }: { id?: string; title: ReactNode; children?: ReactNode }) {
   return (
-    <div id={id} className="flex scroll-mt-24 flex-wrap items-end justify-between gap-4 pt-10 pb-1 sm:pt-14">
-      <div>
-        <div className="eyebrow flex items-center gap-2">
-          <span className="text-ink-2">{index}</span>
-          <span className="h-px w-6 bg-line-strong" />
-          {eyebrow}
-        </div>
-        <h2 className="mt-2 text-[26px] font-semibold tracking-[-0.035em] text-ink sm:text-[32px]">{title}</h2>
-      </div>
+    <div id={id} className="flex scroll-mt-24 flex-wrap items-end justify-between gap-4 pt-10 pb-1 sm:pt-12">
+      <h2 className="text-[26px] font-semibold tracking-[-0.035em] text-ink sm:text-[32px]">{title}</h2>
       {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </div>
   );
@@ -230,16 +223,18 @@ export function AnimatedNumber({ value, format }: { value: number | null | undef
   return <>{value == null ? '—' : format(v)}</>;
 }
 
-/** Tiny area chart for tiles (no axes; the tile's number is the reading). */
-export function Sparkline({ values, color, height = 40, max }: { values: (number | null)[]; color: string; height?: number; max?: number }) {
+/** Tiny area chart for tiles (no axes; the tile's number is the reading). `domain` pins x to a time range. */
+export function Sparkline({ values, color, height = 40, max, domain }: { values: [number, number | null][]; color: string; height?: number; max?: number; domain?: [number, number] }) {
   const id = useRef(`sp${Math.random().toString(36).slice(2)}`).current;
-  const pts = values.map((v, i) => [i, v ?? 0] as const);
+  const pts = values.filter((p): p is [number, number] => p[1] != null);
   if (pts.length < 2) return <div style={{ height }} />;
   const hi = max ?? Math.max(1, ...pts.map((p) => p[1]));
+  const [x0, x1] = domain ?? [pts[0][0], pts.at(-1)![0]];
   const w = 200;
-  const x = (i: number) => (i / (pts.length - 1)) * w;
+  const x = (t: number) => ((t - x0) / Math.max(1, x1 - x0)) * w;
   const y = (v: number) => height - 2 - (v / hi) * (height - 6);
-  const line = pts.map(([i, v], k) => `${k ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+  const line = pts.map(([t, v], k) => `${k ? 'L' : 'M'}${x(t).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+  const end = x(pts.at(-1)![0]);
   return (
     <svg viewBox={`0 0 ${w} ${height}`} preserveAspectRatio="none" className="block w-full" style={{ height }} aria-hidden>
       <defs>
@@ -248,8 +243,9 @@ export function Sparkline({ values, color, height = 40, max }: { values: (number
           <stop offset="1" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={`${line} L${w} ${height} L0 ${height} Z`} fill={`url(#${id})`} />
+      <path d={`${line} L${end.toFixed(1)} ${height} L${x(pts[0][0]).toFixed(1)} ${height} Z`} fill={`url(#${id})`} />
       <path d={line} fill="none" stroke={color} strokeWidth="1.75" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+      {domain && <line x1={end} x2={w} y1={height - 1} y2={height - 1} stroke="var(--border-strong)" strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />}
     </svg>
   );
 }
