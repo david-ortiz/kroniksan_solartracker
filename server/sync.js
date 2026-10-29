@@ -192,7 +192,9 @@ async function fetchEnergyHistory() {
     ]);
     const rows = se
       .series(body?.values, body?.unit || 'WH')
-      .map(([ts, v]) => ['production', localDay(ts, tz), 'api', v]);
+      .map(([ts, v]) => ['production', localDay(ts, tz), 'api', v])
+      // Today is still in progress: a partial total would outrank the live curve.
+      .filter(([, day]) => day < today);
     writeDaily(rows);
     cursor = addDays(end, 1);
     kv.set('energy_history_cursor', cursor);
@@ -384,6 +386,13 @@ function repairProduction() {
   kv.set('repair_production_v1', true);
 }
 
+/** One-time: the history import used to save the day it ran on as a (partial) total. */
+function dropPartialApiDay() {
+  if (kv.get('repair_partial_api_day_v1')) return;
+  db.prepare("DELETE FROM daily WHERE source = 'api' AND day = (SELECT MAX(day) FROM daily WHERE source = 'api')").run();
+  kv.set('repair_partial_api_day_v1', true);
+}
+
 /** One-time: add grid→battery energy to days that already have 15-min data. */
 function backfillGridCharge() {
   if (kv.get('repair_grid_charge_v1') || !site()) return;
@@ -396,6 +405,7 @@ export function startScheduler() {
   if (timer) return;
   repairProduction();
   backfillGridCharge();
+  dropPartialApiDay();
   setTimeout(() => runSync(), 3000);
   timer = setInterval(() => runSync(), TICK_MS);
 }
