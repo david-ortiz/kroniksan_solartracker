@@ -5,6 +5,9 @@ import { config, ROOT } from './config.js';
 import { kv } from './db.js';
 import { api } from './api.js';
 import { eink } from './eink.js';
+import { einkArt } from './eink-art.js';
+import { einkGallery } from './eink-gallery.js';
+import { einkJapan } from './eink-japan.js';
 import { authorizeUrl, exchangeCode } from './solaredge.js';
 import { onConnected, startScheduler } from './sync.js';
 import { setupDemo } from './demo.js';
@@ -14,6 +17,9 @@ app.disable('x-powered-by');
 app.use(express.json());
 app.use('/api', api);
 app.use('/api', eink);
+app.use('/api', einkArt);
+app.use('/api', einkGallery);
+app.use('/api', einkJapan);
 
 // ---------------------------------------------------------------- OAuth
 

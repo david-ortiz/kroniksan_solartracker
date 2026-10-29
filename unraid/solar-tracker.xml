@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>solar-tracker</Name>
+  <Repository>ghcr.io/david-ortiz/kroniksan_solartracker:latest</Repository>
+  <Registry>https://github.com/david-ortiz/kroniksan_solartracker/pkgs/container/kroniksan_solartracker</Registry>
+  <Network>bridge</Network>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Overview>SolarEdge solar dashboard with e-ink frame images. Data (SolarEdge login, history, API credit ledger) is stored in /data.</Overview>
+  <Category>HomeAutomation: Tools:</Category>
+  <WebUI>http://[IP]:[PORT:8787]/</WebUI>
+  <ExtraParams>--user 99:100</ExtraParams>
+  <Config Name="Web UI port" Target="8787" Default="8787" Mode="tcp" Description="Dashboard and e-ink images" Type="Port" Display="always" Required="true" Mask="false">8787</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/solar-tracker" Mode="rw" Description="Database: SolarEdge login, history, credits. Copy your existing solar.db here to keep them." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/solar-tracker</Config>
+  <Config Name="App URL" Target="APP_URL" Default="" Mode="" Description="Address you open the dashboard at, e.g. http://192.168.0.10:8787. Its /auth/callback must be registered in your SolarEdge app if you sign in again." Type="Variable" Display="always" Required="true" Mask="false"></Config>
+  <Config Name="SolarEdge Client ID" Target="SOLAREDGE_CLIENT_ID" Default="" Mode="" Description="From developer.solaredge.com" Type="Variable" Display="always" Required="true" Mask="false"></Config>
+  <Config Name="SolarEdge Client Secret" Target="SOLAREDGE_CLIENT_SECRET" Default="" Mode="" Description="From developer.solaredge.com" Type="Variable" Display="always" Required="true" Mask="true"></Config>
+  <Config Name="Currency" Target="CURRENCY" Default="GBP" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false">GBP</Config>
+  <Config Name="Import price per kWh" Target="ENERGY_IMPORT_PRICE" Default="0.35" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false">0.35</Config>
+  <Config Name="Export price per kWh" Target="ENERGY_EXPORT_PRICE" Default="0.07" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false">0.07</Config>
+  <Config Name="Grid CO2 kg per kWh" Target="GRID_CO2_KG_PER_KWH" Default="0.4" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">0.4</Config>
+  <Config Name="Monthly API credit budget" Target="SOLAREDGE_MONTHLY_BUDGET" Default="1800" Mode="" Description="Free tier is 2,000/month" Type="Variable" Display="advanced" Required="false" Mask="false">1800</Config>
+  <Config Name="Billing day" Target="SOLAREDGE_BILLING_DAY" Default="1" Mode="" Description="Day your API credits reset" Type="Variable" Display="advanced" Required="false" Mask="false">1</Config>
+</Container>

@@ -63,9 +63,13 @@ Tokens and data are stored in `data/solar.db`. Delete that file to start fresh.
 
 | URL | What it is |
 |---|---|
-| `/api/eink.png` | The image for the panel. |
+| `/api/eink.png` | The image for the panel, landscape (1600 × 1200). |
+| `/api/eink-portrait.png` | The portrait layout (1200 × 1600). Same as `/api/eink.png?orientation=portrait`. |
 | `/api/eink.png?preview=1` | The same layout in colours close to the real panel, for checking it in a browser. |
 | `/api/eink.svg` | The vector source. |
+| `/api/eink-art.png` | **Gallery wall frame** (portrait 1200 × 1600). A public-domain masterpiece from The Met, picked to match the sky outside (clear, cloudy, dawn, dusk or night), with a museum-style label showing solar now (battery % at night) and solar today. Full colour, so the display dithers it. Options: `?preview=1` (simulated panel look), `?dither=1` (pre-dithered to the 6 inks), `?mood=night`, `?art=<Met object ID>`. Credits are in `server/art/CREDITS.md`. |
+| `/api/eink-japan.png` | **Modern Japanese prints** (portrait 1200 × 1600). A random shin-hanga print (early-modern Japanese, 1900s–1930s) on every request, never one of the last 6. Artists: Hiroshi Yoshida, Ohara Koson, Takahashi Shōtei and Hashiguchi Goyō, all public domain in the UK and Japan (from Wikimedia Commons). Full-bleed art with a compact band showing solar now (battery % at night) and solar today. Same `?preview=1` and `?dither=1` options. To add your own images, drop them into `server/art-shinhanga/` and add them to its `manifest.json`. |
+| `/api/eink-poster.png` | The earlier flat-colour poster design, with a sun, hills and a solar house. `?scene=day` or `?scene=night` previews either look. |
 
 On the Raspberry Pi:
 
@@ -81,3 +85,18 @@ Then add it to cron to run every 15 minutes:
 ```
 
 Add `--rotate 180` if the panel is mounted upside down. On Windows, allow Node.js through the firewall on port 8787 so the Pi can reach it.
+
+## Run on Unraid (Docker tab)
+
+Every push to `main` makes GitHub Actions ([.github/workflows/docker.yml](.github/workflows/docker.yml)) build the image and publish it as `ghcr.io/david-ortiz/kroniksan_solartracker:latest`.
+
+1. **Let Unraid pull the image.** The repo is private, so its image is private too. Do one of these:
+   - On GitHub, open the package and set **Package settings → Change visibility → Public**. The image contains no secrets; your keys are entered on Unraid.
+   - Or, in the Unraid terminal, run `docker login ghcr.io` once, with a GitHub token that has the `read:packages` scope.
+2. **Add the template.** Copy [unraid/solar-tracker.xml](unraid/solar-tracker.xml) to `/boot/config/plugins/dockerMan/templates-user/my-solar-tracker.xml`, using the `flash` share.
+3. **Create the container.** Go to **Docker → Add Container**, pick **solar-tracker** from the Template list, fill in App URL, Client ID and Client Secret, then click **Apply**.
+4. **Keep your history and sign-in.** Stop the copy on your PC first. Two copies would fight over SolarEdge's rotating refresh token and double the API credits. Then copy `data/solar.db` (plus any `-wal` and `-shm` files) into `/mnt/user/appdata/solar-tracker/` and restart the container.
+
+**To update,** push to GitHub, wait for the build, then click **Check for Updates → apply update** in the Docker tab.
+
+[docker-compose.yml](docker-compose.yml) is there if you'd rather use the Compose Manager plugin.

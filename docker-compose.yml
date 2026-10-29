@@ -1,0 +1,24 @@
+services:
+  solar-tracker:
+    build: .
+    image: solar-tracker:latest
+    container_name: solar-tracker
+    restart: unless-stopped
+    # Unraid appdata is owned by nobody:users (99:100).
+    user: "99:100"
+    ports:
+      - "8787:8787"
+    environment:
+      # Address you open the dashboard at. "<APP_URL>/auth/callback" must be registered
+      # in your SolarEdge app (Redirect URI + Returned URL) if you ever need to sign in again.
+      APP_URL: http://192.168.0.10:8787
+      SOLAREDGE_CLIENT_ID: ""
+      SOLAREDGE_CLIENT_SECRET: ""
+      SOLAREDGE_MONTHLY_BUDGET: "1800"
+      SOLAREDGE_BILLING_DAY: "1"
+      CURRENCY: GBP
+      ENERGY_IMPORT_PRICE: "0.35"
+      ENERGY_EXPORT_PRICE: "0.07"
+      GRID_CO2_KG_PER_KWH: "0.4"
+    volumes:
+      - /mnt/user/appdata/solar-tracker:/data
